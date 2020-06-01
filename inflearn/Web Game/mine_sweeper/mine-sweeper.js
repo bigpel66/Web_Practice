@@ -2,8 +2,11 @@ let isInit = true;
 let isOver = false;
 let openCount = 0;
 let dataSet = [];
+let timerCount;
+let timerCheck;
 
 const tbody = document.querySelector('#table tbody');
+const timerText = document.querySelector('#timer');
 const result = document.querySelector('#result');
 
 const statusTable = {
@@ -123,6 +126,7 @@ const tileClick = (event, rows, cols, mines) => {
     }
 
     if (dataSet[xPos][yPos] === statusTable.mine) {
+        clearInterval(timerCheck);
         isOver = true;
         event.currentTarget.textContent = 'ㅋ';
         event.currentTarget.classList.add('bomb');
@@ -190,6 +194,7 @@ const tileClick = (event, rows, cols, mines) => {
     }
 
     if (openCount === rows * cols - mines) {
+        clearInterval(timerCheck);
         isOver = true;
         result.textContent = 'Victory';
     }
@@ -255,6 +260,15 @@ const tileGenerate = (rows, cols, mines) => {
 };
 
 const startGame = () => {
+    clearInterval(timerCheck);
+
+    timerCount = 0;
+    timerText.innerHTML = '';
+
+    timerCheck = setInterval(() => {
+        timerText.textContent = `${timerCount++} Sec`;
+    }, 1000);
+
     const rows = document.querySelector('#row').value;
     const cols = document.querySelector('#col').value;
     const mines = document.querySelector('#mine').value;
