@@ -209,9 +209,16 @@ const mineIndex = (rows, cols, mines, startIndex, minePos) => {
             return index;
         });
 
-    candidate.splice(startIndex, 1);
+    let diff;
 
-    while (candidate.length > rows * cols - mines - 1) {
+    if (startIndex !== -1) {
+        diff = 0;
+    } else {
+        candidate.splice(startIndex, 1);
+        diff = 1;
+    }
+
+    while (candidate.length > rows * cols - mines - diff) {
         minePos.push(
             candidate.splice(Math.floor(Math.random() * candidate.length), 1)[0]
         );
@@ -219,23 +226,25 @@ const mineIndex = (rows, cols, mines, startIndex, minePos) => {
 };
 
 const mineGenerate = (rows, cols, mines, xStart, yStart, isLeftClick) => {
+    let minePos = [];
+
     if (isLeftClick) {
-        let minePos = [];
-
         mineIndex(rows, cols, mines, xStart * cols + yStart, minePos);
+    } else {
+        mineIndex(rows, cols, mines, -1, minePos);
+    }
 
-        minePos.sort((former, latter) => {
-            return former - latter;
-        });
+    minePos.sort((former, latter) => {
+        return former - latter;
+    });
 
-        for (let i = 0; i < mines; i++) {
-            const xPos = Math.floor(minePos[i] / cols);
-            const yPos = minePos[i] % cols;
+    for (let i = 0; i < mines; i++) {
+        const xPos = Math.floor(minePos[i] / cols);
+        const yPos = minePos[i] % cols;
 
-            tbody.children[xPos].children[yPos].textContent = 'X';
+        tbody.children[xPos].children[yPos].textContent = 'X';
 
-            dataSet[xPos][yPos] = statusTable.mine;
-        }
+        dataSet[xPos][yPos] = statusTable.mine;
     }
 };
 
