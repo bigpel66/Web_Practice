@@ -179,15 +179,17 @@ const tileClick = (event, rows, cols, mines) => {
                     );
 
                     if (dataSet[xNear][yNear] !== statusTable.open) {
-                        const numberOfMinesNearTile = checkNumberOfMinesNearTiles(
-                            xNear,
-                            yNear
-                        );
+                        // const numberOfMinesNearTile = checkNumberOfMinesNearTiles(
+                        //     xNear,
+                        //     yNear
+                        // );
 
-                        elementNearTile.textContent = numberOfMinesNearTile;
-                        elementNearTile.classList.add('open');
-                        dataSet[xNear][yNear] = statusTable.open;
-                        openCount++;
+                        // elementNearTile.textContent = numberOfMinesNearTile;
+                        // elementNearTile.classList.add('open');
+                        // dataSet[xNear][yNear] = statusTable.open;
+                        // openCount++;
+
+                        elementNearTile.click();
                     }
                 });
         }
