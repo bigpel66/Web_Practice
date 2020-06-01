@@ -73,6 +73,32 @@ const contextMenuClick = (event, rows, cols, mines) => {
     }
 };
 
+const checkNumberOfMinesNearTiles = (xPos, yPos) => {
+    const dataNearTiles = [dataSet[xPos][yPos - 1], dataSet[xPos][yPos + 1]];
+
+    if (dataSet[xPos + 1]) {
+        for (let i = 0; i < 3; i++) {
+            dataNearTiles.push(dataSet[xPos + 1][yPos + i - 1]);
+        }
+    }
+
+    if (dataSet[xPos - 1]) {
+        for (let i = 0; i < 3; i++) {
+            dataNearTiles.push(dataSet[xPos - 1][yPos + i - 1]);
+        }
+    }
+
+    const numberOfMines = dataNearTiles.filter((dataNearTile) => {
+        return [
+            statusTable.mine,
+            statusTable.flagMine,
+            statusTable.questionMine,
+        ].includes(dataNearTile);
+    }).length;
+
+    return numberOfMines;
+};
+
 const tileClick = (event, rows, cols, mines) => {
     if (isOver) {
         return;
@@ -87,6 +113,11 @@ const tileClick = (event, rows, cols, mines) => {
         event.currentTarget.parentNode
     );
 
+    if (isInit) {
+        isInit = false;
+        mineGenerate(rows, cols, mines, xPos, yPos, true);
+    }
+
     if (![statusTable.normal, statusTable.mine].includes(dataSet[xPos][yPos])) {
         return;
     }
@@ -97,20 +128,70 @@ const tileClick = (event, rows, cols, mines) => {
         event.currentTarget.classList.add('bomb');
         result.textContent = 'Defeat';
     } else {
+        const numberOfMines = checkNumberOfMinesNearTiles(xPos, yPos);
+
+        event.currentTarget.textContent = numberOfMines;
         event.currentTarget.classList.add('open');
+        dataSet[xPos][yPos] = statusTable.open;
         openCount++;
 
-        // surrounded
+        if (numberOfMines === 0) {
+            const elementNearTiles = [
+                tbody.children[xPos].children[yPos - 1],
+                tbody.children[xPos].children[yPos + 1],
+            ];
+
+            if (tbody.children[xPos - 1]) {
+                for (let i = 0; i < 3; i++) {
+                    elementNearTiles.push(
+                        tbody.children[xPos - 1].children[yPos + i - 1]
+                    );
+                }
+            }
+
+            if (tbody.children[xPos + 1]) {
+                for (let i = 0; i < 3; i++) {
+                    elementNearTiles.push(
+                        tbody.children[xPos + 1].children[yPos + i - 1]
+                    );
+                }
+            }
+
+            elementNearTiles
+                .filter((elementNearTile) => {
+                    return !!elementNearTile;
+                })
+                .forEach((elementNearTile) => {
+                    const parentRow = elementNearTile.parentNode;
+                    const parentBody = parentRow.parentNode;
+
+                    const yNear = Array.prototype.indexOf.call(
+                        parentRow.children,
+                        elementNearTile
+                    );
+                    const xNear = Array.prototype.indexOf.call(
+                        parentBody.children,
+                        parentRow
+                    );
+
+                    if (dataSet[xNear][yNear] !== statusTable.open) {
+                        const numberOfMinesNearTile = checkNumberOfMinesNearTiles(
+                            xNear,
+                            yNear
+                        );
+
+                        elementNearTile.textContent = numberOfMinesNearTile;
+                        elementNearTile.classList.add('open');
+                        dataSet[xNear][yNear] = statusTable.open;
+                        openCount++;
+                    }
+                });
+        }
     }
 
     if (openCount === rows * cols - mines) {
         isOver = true;
         result.textContent = 'Victory';
-    }
-
-    if (isInit) {
-        isInit = false;
-        mineGenerate(rows, cols, mines, xPos, yPos, true);
     }
 };
 
