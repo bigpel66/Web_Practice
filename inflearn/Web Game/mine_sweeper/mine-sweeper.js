@@ -19,6 +19,24 @@ const statusTable = {
     normal: 0,
 };
 
+const openMineTiles = () => {
+    const trBunch = Array.from(tbody.children);
+    const tdBunch = [];
+
+    trBunch.forEach((tr) => {
+        tdBunch.push(Array.from(tr.children));
+    });
+
+    tdBunch.forEach((tr) => {
+        tr.forEach((td) => {
+            if (td.textContent === 'X') {
+                td.textContent = 'ㅋ';
+                td.classList.add('bomb');
+            }
+        });
+    });
+};
+
 const contextMenuClick = (event, rows, cols, mines) => {
     event.preventDefault();
 
@@ -131,6 +149,8 @@ const tileClick = (event, rows, cols, mines) => {
         event.currentTarget.textContent = 'ㅋ';
         event.currentTarget.classList.add('bomb');
         result.textContent = 'Defeat';
+
+        openMineTiles();
     } else {
         const numberOfMines = checkNumberOfMinesNearTiles(xPos, yPos);
 
@@ -212,10 +232,10 @@ const mineIndex = (rows, cols, mines, startIndex, minePos) => {
     let diff;
 
     if (startIndex !== -1) {
-        diff = 0;
-    } else {
         candidate.splice(startIndex, 1);
         diff = 1;
+    } else {
+        diff = 0;
     }
 
     while (candidate.length > rows * cols - mines - diff) {
@@ -274,7 +294,7 @@ const startGame = () => {
     clearInterval(timerCheck);
 
     timerCount = 0;
-    timerText.innerHTML = '';
+    timerText.textContent = 'Starting...';
 
     timerCheck = setInterval(() => {
         timerText.textContent = `${timerCount++} Sec`;
