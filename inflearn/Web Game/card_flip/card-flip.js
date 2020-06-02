@@ -18,13 +18,19 @@ const colors = [
     'white',
     'white',
 ];
-const candidate = colors.slice();
+
 let isClickable = false;
 let isStartable = true;
 let startTime;
 let EndTime;
 
+let candidate = [];
+let clickArr = [];
+let finishArr = [];
+
 const shuffleColors = () => {
+    candidate = colors.slice();
+
     candidate.forEach(() => {
         candidate.push(
             candidate.splice(Math.floor(Math.random() * candidate.length), 1)[0]
@@ -36,7 +42,50 @@ const shuffleColors = () => {
     });
 };
 
-const flipCallback = (card) => {};
+const flipCallback = (card) => {
+    if (isClickable && !finishArr.includes(card)) {
+        card.classList.toggle('flipped');
+
+        if (clickArr.includes(card)) {
+            clickArr.splice(clickArr.indexOf(card), 1);
+        } else {
+            clickArr.push(card);
+        }
+
+        if (clickArr.length == 2) {
+            if (
+                clickArr[0].querySelector('.card-back').style
+                    .backgroundColor ===
+                clickArr[1].querySelector('.card-back').style.backgroundColor
+            ) {
+                clickArr.forEach((element) => {
+                    finishArr.push(element);
+                });
+                clickArr = [];
+
+                if (finishArr.length == rows * cols) {
+                    endTime = Date.now();
+                    const diff = (endTime - startTime) / 1000;
+                    result.textContent = `You Completed in ${diff} Seconds`;
+                    finishArr = [];
+                    button.textContent = 'Start New Game';
+                    alert(`${diff} Seconds!`);
+                }
+            } else {
+                isClickable = false;
+
+                setTimeout(() => {
+                    isClickable = true;
+                    clickArr.forEach((element) => {
+                        element.classList.toggle('flipped');
+                    });
+
+                    clickArr.splice(0, clickArr.length);
+                }, 1000);
+            }
+        }
+    }
+};
 
 const cardInitOpen = () => {
     document.querySelectorAll('.card').forEach((card, index) => {
@@ -58,7 +107,6 @@ const cardInitClose = () => {
             isClickable = true;
             isStartable = true;
             button.textContent = 'Restart';
-            result.textContent = startTime;
         }, 1000 + (rows * cols + (rows * cols) / 2) * 100);
     }, 5000);
 };
@@ -99,6 +147,9 @@ const startGame = () => {
         isStartable = false;
         isClickable = false;
 
+        wrapper.innerHTML = '';
+
+        cardSetting(rows, cols);
         shuffleColors();
         cardInitOpen();
         cardInitClose();
@@ -106,6 +157,9 @@ const startGame = () => {
 
         startTime = null;
         endTime = null;
+        candidate = [];
+        clickArr = [];
+        finishArr = [];
         result.textContent = '';
     }
 };
