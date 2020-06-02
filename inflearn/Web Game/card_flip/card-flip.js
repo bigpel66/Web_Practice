@@ -1,5 +1,6 @@
 const wrapper = document.querySelector('#wrapper');
 const button = document.querySelector('#start');
+const result = document.querySelector('#result');
 
 const rows = 3;
 const cols = 4;
@@ -18,7 +19,10 @@ const colors = [
     'white',
 ];
 const candidate = colors.slice();
-const isClickable = true;
+let isClickable = false;
+let isStartable = true;
+let startTime;
+let EndTime;
 
 const shuffleColors = () => {
     candidate.forEach(() => {
@@ -32,9 +36,7 @@ const shuffleColors = () => {
     });
 };
 
-const flipCallback = (card) => {
-    console.log(card);
-};
+const flipCallback = (card) => {};
 
 const cardInitOpen = () => {
     document.querySelectorAll('.card').forEach((card, index) => {
@@ -51,6 +53,13 @@ const cardInitClose = () => {
                 card.classList.remove('flipped');
             }, 1000 + index * 100);
         });
+        setTimeout(() => {
+            startTime = Date.now();
+            isClickable = true;
+            isStartable = true;
+            button.textContent = 'Restart';
+            result.textContent = startTime;
+        }, 1000 + (rows * cols + (rows * cols) / 2) * 100);
     }, 5000);
 };
 
@@ -86,12 +95,19 @@ const cardClickEvent = () => {
 };
 
 const startGame = () => {
-    shuffleColors();
-    cardInitOpen();
-    cardInitClose();
-    cardClickEvent();
+    if (isStartable) {
+        isStartable = false;
+        isClickable = false;
 
-    button.textContent = 'Restart';
+        shuffleColors();
+        cardInitOpen();
+        cardInitClose();
+        cardClickEvent();
+
+        startTime = null;
+        endTime = null;
+        result.textContent = '';
+    }
 };
 
 button.addEventListener('click', startGame);
