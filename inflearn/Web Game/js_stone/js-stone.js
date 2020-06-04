@@ -42,7 +42,8 @@ function Card(isCharacter, whichPlayer) {
         this.field = false;
     }
 
-    isDone = false;
+    this.isInit = true;
+    this.isDone = false;
 
     if (whichPlayer) {
         this.ownBy = true;
@@ -172,6 +173,7 @@ const actionToSummon = (data) => {
     if (currentCost >= data.cost) {
         const index = object.deckData.indexOf(data);
         data.field = true;
+        data.init = true;
         object.deckData.splice(index, 1);
         object.fieldData.push(data);
 
@@ -221,13 +223,17 @@ const actionOnTurn = (card, data) => {
     }
 
     if (data.field) {
-        document.querySelectorAll('.card').forEach((item) => {
-            return item.classList.remove('card-selected');
-        });
+        if (!data.isInit) {
+            document.querySelectorAll('.card').forEach((item) => {
+                return item.classList.remove('card-selected');
+            });
 
-        card.classList.add('card-selected');
-        turnCharacter.selectedCardUI = card;
-        turnCharacter.selectedCardData = data;
+            card.classList.add('card-selected');
+            turnCharacter.selectedCardUI = card;
+            turnCharacter.selectedCardData = data;
+        } else {
+            return;
+        }
     } else {
         actionToSummon(data);
     }
@@ -246,6 +252,7 @@ const actionTurnOver = () => {
     const object = whoseTurn ? playerCharacter : rivalCharacter;
 
     object.fieldData.forEach((data) => {
+        data.isInit = false;
         data.isDone = false;
     });
 
