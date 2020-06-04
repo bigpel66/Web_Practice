@@ -13,6 +13,9 @@
             .turn {
                 border: 1px solid blue;
             }
+            .not-turn {
+                border: 1px solid transparent;
+            }
             #rival {
                 vertical-align: bottom;
             }
@@ -22,6 +25,7 @@
                 vertical-align: top;
                 width: 300px;
                 background: silver;
+                margin-left: 10px;
             }
             #rival-deck,
             #rival-hero,
@@ -97,7 +101,7 @@
         </style>
     </head>
     <body>
-        <div id="rival">
+        <div id="rival" class="not-turn">
             <div>Cost: <span id="rival-cost">10</span>/<span>10</span></div>
             <div id="rival-hero"></div>
             <div id="rival-cards" style="height: 150px;"></div>

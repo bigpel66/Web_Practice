@@ -1,5 +1,4 @@
 const cardUI = document.querySelector('.card-hidden .card');
-
 const button = document.querySelector('#turn-btn');
 
 const rivalCharacter = {
@@ -12,7 +11,6 @@ const rivalCharacter = {
     selectedCardUI: null,
     selectedCardData: null,
 };
-
 const playerCharacter = {
     characterUI: document.querySelector('#my-hero'),
     deckUI: document.querySelector('#my-deck'),
@@ -25,6 +23,7 @@ const playerCharacter = {
 };
 
 let isStart = false;
+let whoseTurn = true;
 
 function Card(isCharacter, whichPlayer) {
     if (isCharacter) {
@@ -146,11 +145,18 @@ const actionToSummon = () => {};
 
 const actionOnTurn = () => {};
 
-const actionTurnOver = () => {};
+const actionTurnOver = () => {
+    const object = whoseTurn ? playerCharacter : rivalCharacter;
+
+    document.querySelector('#rival').classList.toggle('turn');
+    document.querySelector('#my').classList.toggle('turn');
+    document.querySelector('#rival').classList.toggle('not-turn');
+    document.querySelector('#my').classList.toggle('not-turn');
+};
 
 const init = (count) => {
     dataInitialize();
-    
+
     if (count > 0) {
         deckGenerate(count);
         characterGenerate();
