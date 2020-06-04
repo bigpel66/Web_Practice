@@ -1,4 +1,6 @@
-const cardUI = document.querySelector('.card-hidden');
+const cardUI = document.querySelector('.card-hidden .card');
+
+const button = document.querySelector('#turn-btn');
 
 const rivalCharacter = {
     characterUI: document.querySelector('#rival-hero'),
@@ -22,36 +24,86 @@ const playerCharacter = {
     selectedCardData: null,
 };
 
-function Card() {}
+let isStart = false;
 
-const cardFactory = () => {};
+function Card(isCharacter, whichPlayer) {
+    if (isCharacter) {
+        this.attackDamage = Math.floor(Math.random() * 2) + 1;
+        this.healthPoints = Math.floor(Math.random() * 5) + 30;
+        this.character = true;
+        this.field = true;
+    } else {
+        this.attackDamage = Math.floor(Math.random() * 5) + 1;
+        this.healthPoints = Math.floor(Math.random() * 5) + 1;
+        this.cost = Math.floor((this.attackDamage + this.healthPoints) / 2);
+        this.character = false;
+        this.field = false;
+    }
 
-const connectDomToRender = () => {};
+    if (whichPlayer) {
+        this.ownBy = true;
+    } else {
+        this.ownBy = false;
+    }
+}
 
-const characterRender = () => {
-    connectDomToRender();
+const cardFactory = (isCharacter, whichPlayer) => {
+    return new Card(isCharacter, whichPlayer);
 };
 
-const fieldRender = () => {
-    connectDomToRender();
+const connectDomToRender = (data, domElement, isCharacter) => {
+    const card = cardUI.cloneNode(true);
+
+    card.querySelector('.card-cost').textContent = data.cost;
+    card.querySelector('.card-att').textContent = data.attackDamage;
+    card.querySelector('.card-hp').textContent = data.healthPoints;
+
+    if (isCharacter) {
+        const cardName = document.createElement('div');
+        cardName.textContent = 'Champ';
+        card.querySelector('.card-cost').style.display = 'none';
+        card.appendChild(cardName);
+    }
+
+    card.addEventListener('click', actionOnTurn);
+
+    domElement.appendChild(card);
 };
 
-const deckRender = () => {
-    connectDomToRender();
+const characterRender = (object) => {
+    object.characterUI.innerHTML = '';
+    connectDomToRender(object.characterData, object.characterUI, true);
 };
 
-const screenRenderOnCharacter = () => {
-    characterRender();
-    fieldRender();
-    deckRender();
+const fieldRender = (object) => {
+    object.fieldUI.innerHTML = '';
+    object.fieldData.forEach((data) => {
+        connectDomToRender(data, object.fieldUI, false);
+    });
+};
+
+const deckRender = (object) => {
+    object.deckUI.innerHTML = '';
+    object.deckData.forEach((data) => {
+        connectDomToRender(data, object.deckUI, false);
+    });
+};
+
+const screenRenderOnCharacter = (whichPlayer) => {
+    const object = whichPlayer ? playerCharacter : rivalCharacter;
+    deckRender(object);
+    characterRender(object);
+    fieldRender(object);
 };
 
 const playerCharacterGenerate = () => {
-    characterRender();
+    playerCharacter.characterData = cardFactory(true, true);
+    characterRender(playerCharacter);
 };
 
 const rivalCharacterGenerate = () => {
-    characterRender();
+    rivalCharacter.characterData = cardFactory(true, false);
+    characterRender(rivalCharacter);
 };
 
 const characterGenerate = () => {
@@ -59,28 +111,81 @@ const characterGenerate = () => {
     rivalCharacterGenerate();
 };
 
-const playerDeckGenerate = () => {
-    deckRender();
+const playerDeckGenerate = (count) => {
+    for (let i = 0; i < count; i++) {
+        playerCharacter.deckData.push(cardFactory(false, true));
+    }
+    deckRender(playerCharacter);
 };
 
-const rivalDeckGenerate = () => {
-    deckRender();
+const rivalDeckGenerate = (count) => {
+    for (let i = 0; i < count; i++) {
+        rivalCharacter.deckData.push(cardFactory(false, false));
+    }
+    deckRender(rivalCharacter);
 };
 
-const deckGenerate = () => {
-    playerDeckGenerate();
-    rivalDeckGenerate();
+const deckGenerate = (count) => {
+    playerDeckGenerate(count);
+    rivalDeckGenerate(count);
+};
+
+const dataInitialize = () => {
+    [rivalCharacter, playerCharacter].forEach((character) => {
+        character.characterData = [];
+        character.deckData = [];
+        character.fieldData = [];
+        character.selectedCardUI = [];
+        character.selectedCardData = [];
+    });
 };
 
 const actionToAttck = () => {};
 
 const actionToSummon = () => {};
 
-const init = () => {
-    deckGenerate();
-    characterGenerate();
-    screenRenderOnCharacter();
-    screenRenderOnCharacter();
+const actionOnTurn = () => {};
+
+const actionTurnOver = () => {};
+
+const init = (count) => {
+    dataInitialize();
+    
+    if (count > 0) {
+        deckGenerate(count);
+        characterGenerate();
+        screenRenderOnCharacter(true);
+        screenRenderOnCharacter(false);
+    } else {
+        isStart = false;
+        button.textContent = 'Start';
+        document.querySelector('#btns .reset').remove();
+        playerCharacter.deckUI.textContent = 'Deck';
+        rivalCharacter.deckUI.textContent = 'Deck';
+        playerCharacter.characterUI.innerHTML = '';
+        rivalCharacter.characterUI.innerHTML = '';
+        playerCharacter.fieldUI.innerHTML = '';
+        rivalCharacter.fieldUI.innerHTML = '';
+    }
 };
 
-init();
+button.addEventListener('click', () => {
+    if (!isStart) {
+        isStart = true;
+
+        const gameResetButton = document.createElement('button');
+        gameResetButton.textContent = 'Reset Game';
+        gameResetButton.classList.add('reset');
+        gameResetButton.addEventListener('click', () => {
+            init(0);
+        });
+
+        button.textContent = 'Turn Over';
+
+        document.querySelector('#btns').appendChild(gameResetButton);
+
+        init(8);
+    } else {
+        actionTurnOver();
+    }
+});

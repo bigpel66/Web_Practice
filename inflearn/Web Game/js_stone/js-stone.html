@@ -89,6 +89,11 @@
                 position: relative;
                 top: -23px;
             }
+            .reset {
+                float: right;
+                position: relative;
+                top: -23px;
+            }
         </style>
     </head>
     <body>
@@ -100,8 +105,12 @@
         <div id="rival-deck">
             <div>Deck</div>
         </div>
-        <hr />
-        <button id="turn-btn">Turn Over</button>
+
+        <div id="btns">
+            <hr />
+            <button id="turn-btn">Start</button>
+        </div>
+
         <div id="my" class="turn">
             <div id="my-cards" style="height: 150px;"></div>
             <div id="my-hero"></div>
@@ -110,6 +119,7 @@
         <div id="my-deck">
             <div>Deck</div>
         </div>
+
         <div class="card-hidden">
             <div class="card">
                 <div class="card-cost"></div>
