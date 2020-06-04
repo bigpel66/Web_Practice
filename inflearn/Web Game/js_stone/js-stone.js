@@ -5,6 +5,7 @@ const rivalCharacter = {
     characterUI: document.querySelector('#rival-hero'),
     deckUI: document.querySelector('#rival-deck'),
     fieldUI: document.querySelector('#rival-cards'),
+    costText: document.querySelector('#rival-cost'),
     characterData: [],
     deckData: [],
     fieldData: [],
@@ -15,6 +16,7 @@ const playerCharacter = {
     characterUI: document.querySelector('#my-hero'),
     deckUI: document.querySelector('#my-deck'),
     fieldUI: document.querySelector('#my-cards'),
+    costText: document.querySelector('#my-cost'),
     characterData: [],
     deckData: [],
     fieldData: [],
@@ -24,6 +26,7 @@ const playerCharacter = {
 
 let isStart = false;
 let whoseTurn = true;
+let turnTimer;
 
 function Card(isCharacter, whichPlayer) {
     if (isCharacter) {
@@ -38,6 +41,8 @@ function Card(isCharacter, whichPlayer) {
         this.character = false;
         this.field = false;
     }
+
+    isDone = false;
 
     if (whichPlayer) {
         this.ownBy = true;
@@ -64,7 +69,13 @@ const connectDomToRender = (data, domElement, isCharacter) => {
         card.appendChild(cardName);
     }
 
-    card.addEventListener('click', actionOnTurn);
+    if (data.isDone) {
+        card.classList.add('card-turnover');
+    }
+
+    card.addEventListener('click', () => {
+        actionOnTurn(card, data);
+    });
 
     domElement.appendChild(card);
 };
@@ -111,15 +122,19 @@ const characterGenerate = () => {
 };
 
 const playerDeckGenerate = (count) => {
-    for (let i = 0; i < count; i++) {
-        playerCharacter.deckData.push(cardFactory(false, true));
+    if (playerCharacter.deckData.length < 10) {
+        for (let i = 0; i < count; i++) {
+            playerCharacter.deckData.push(cardFactory(false, true));
+        }
     }
     deckRender(playerCharacter);
 };
 
 const rivalDeckGenerate = (count) => {
-    for (let i = 0; i < count; i++) {
-        rivalCharacter.deckData.push(cardFactory(false, false));
+    if (rivalCharacter.deckData.length < 10) {
+        for (let i = 0; i < count; i++) {
+            rivalCharacter.deckData.push(cardFactory(false, false));
+        }
     }
     deckRender(rivalCharacter);
 };
@@ -134,27 +149,127 @@ const dataInitialize = () => {
         character.characterData = [];
         character.deckData = [];
         character.fieldData = [];
-        character.selectedCardUI = [];
-        character.selectedCardData = [];
+        character.selectedCardUI = null;
+        character.selectedCardData = null;
     });
 };
 
-const actionToAttck = () => {};
+const selectedCardInitialize = () => {
+    [rivalCharacter, playerCharacter].forEach((character) => {
+        character.selectedCardUI = null;
+        character.selectedCardData = null;
+    });
+};
 
-const actionToSummon = () => {};
+const actionToSummon = (data) => {
+    const object = whoseTurn ? playerCharacter : rivalCharacter;
+    const currentCost = Number(object.costText.textContent);
 
-const actionOnTurn = () => {};
+    if (object.fieldData.length > 4) {
+        return;
+    }
+
+    if (currentCost >= data.cost) {
+        const index = object.deckData.indexOf(data);
+        data.field = true;
+        object.deckData.splice(index, 1);
+        object.fieldData.push(data);
+
+        deckRender(object);
+        fieldRender(object);
+
+        object.costText.textContent = currentCost - data.cost;
+    } else {
+        return;
+    }
+};
+
+const actionOnTurn = (card, data) => {
+    const turnCharacter = whoseTurn ? playerCharacter : rivalCharacter;
+    const oppositeCharacter = whoseTurn ? rivalCharacter : playerCharacter;
+
+    const isTurnsCard = data.ownBy === whoseTurn;
+
+    if (!isTurnsCard && data.field && turnCharacter.selectedCardUI) {
+        data.healthPoints =
+            data.healthPoints - turnCharacter.selectedCardData.attackDamage;
+
+        if (data.healthPoints <= 0) {
+            if (data.character) {
+                const message = whoseTurn
+                    ? '1 player Victory'
+                    : '2 player Victory';
+                alert(message);
+                init(0);
+                return;
+            }
+            const index = oppositeCharacter.fieldData.indexOf(data);
+            oppositeCharacter.fieldData.splice(index, 1);
+        }
+
+        turnCharacter.selectedCardData.isDone = true;
+
+        selectedCardInitialize();
+        screenRenderOnCharacter(true);
+        screenRenderOnCharacter(false);
+
+        return;
+    }
+
+    if (data.isDone || !isTurnsCard) {
+        return;
+    }
+
+    if (data.field) {
+        document.querySelectorAll('.card').forEach((item) => {
+            return item.classList.remove('card-selected');
+        });
+
+        card.classList.add('card-selected');
+        turnCharacter.selectedCardUI = card;
+        turnCharacter.selectedCardData = data;
+    } else {
+        actionToSummon(data);
+    }
+};
 
 const actionTurnOver = () => {
-    const object = whoseTurn ? playerCharacter : rivalCharacter;
-
+    clearTimeout(turnTimer);
+    turnTimer = setTimeout(() => {
+        actionTurnOver();
+    }, 60 * 1000);
     document.querySelector('#rival').classList.toggle('turn');
     document.querySelector('#my').classList.toggle('turn');
     document.querySelector('#rival').classList.toggle('not-turn');
     document.querySelector('#my').classList.toggle('not-turn');
+
+    const object = whoseTurn ? playerCharacter : rivalCharacter;
+
+    object.fieldData.forEach((data) => {
+        data.isDone = false;
+    });
+
+    object.characterData.isDone = false;
+
+    screenRenderOnCharacter(true);
+    screenRenderOnCharacter(false);
+
+    whoseTurn = !whoseTurn;
+    whoseTurn ? playerDeckGenerate(1) : rivalDeckGenerate(1);
+
+    playerCharacter.costText.textContent = 10;
+    rivalCharacter.costText.textContent = 10;
+
+    selectedCardInitialize();
 };
 
 const init = (count) => {
+    document.querySelector('#rival').classList.remove('turn');
+    document.querySelector('#rival').classList.add('not-turn');
+    document.querySelector('#my').classList.remove('not-turn');
+    document.querySelector('#my').classList.add('turn');
+    whoseTurn = true;
+
     dataInitialize();
 
     if (count > 0) {
@@ -190,7 +305,7 @@ button.addEventListener('click', () => {
 
         document.querySelector('#btns').appendChild(gameResetButton);
 
-        init(8);
+        init(5);
     } else {
         actionTurnOver();
     }
