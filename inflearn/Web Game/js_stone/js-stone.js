@@ -256,6 +256,7 @@ const actionTurnOver = () => {
         data.isDone = false;
     });
 
+    object.characterData.isInit = false;
     object.characterData.isDone = false;
 
     screenRenderOnCharacter(true);
