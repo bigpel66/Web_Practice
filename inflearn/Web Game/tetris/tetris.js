@@ -288,13 +288,21 @@ const nextToSubScreen = () => {
 const dataToScreen = () => {
     tetrisData.forEach((row, i) => {
         row.forEach((attr, j) => {
-            if (attr > 0) {
+            if (
+                attr > 0 &&
+                tetris.children[i] &&
+                tetris.children[i].children[j]
+            ) {
                 tetris.children[i].children[j].className =
                     tetrisData[i][j] >= 10
                         ? colorData[tetrisData[i][j] / 10 - 1]
                         : colorData[tetrisData[i][j] - 1];
-            } else {
-                tetris.children[i].children[j].className = '';
+            } else if (
+                attr <= 0 &&
+                tetris.children[i] &&
+                tetris.children[i].children[j]
+            ) {
+                tetris.children[i].children[j].className = 'white';
             }
         });
     });
@@ -317,8 +325,8 @@ const checkRow = () => {
 
     const fullTupleCount = fullTupleIndex.length;
 
-    tetrisData.filter((row, i) => {
-        return !fullTupleIndex.includes(i);
+    fullTupleIndex.forEach((attr) => {
+        tetrisData.splice(attr, 1);
     });
 
     for (let i = 0; i < fullTupleCount; i++) {
@@ -432,10 +440,10 @@ const startGame = () => {
         isStart = true;
         if (isPause) {
             setTimeout(() => {
-                tickInterval = setInterval(tickFunction, 1000);
+                tickInterval = setInterval(tickFunction, 300);
             }, 500);
         } else {
-            tickInterval = setInterval(tickFunction, 1000);
+            tickInterval = setInterval(tickFunction, 300);
             blockGenerate();
         }
         isPause = false;
@@ -449,6 +457,7 @@ const startGame = () => {
 
 const resetGame = () => {
     isStart = false;
+    isPause = false;
     clearInterval(tickInterval);
     resetButton.style.display = 'none';
     startButton.textContent = 'Start';
@@ -464,10 +473,164 @@ const resetGame = () => {
     nextInit();
 };
 
+const movableCheck = (index) => {
+    let isMovable = true;
+    let currentBlockShape = currentBlock.shape[currentBlock.currentShapeIndex];
+
+    for (
+        let i = blockCurrentPos[0];
+        i < blockCurrentPos[0] + currentBlockShape.length;
+        i++
+    ) {
+        if (!isMovable) {
+            break;
+        }
+
+        for (
+            let j = blockCurrentPos[[1]];
+            j < blockCurrentPos[1] + currentBlockShape.length;
+            j++
+        ) {
+            if (!tetrisData[i] || !tetrisData[i][j]) {
+                continue;
+            }
+
+            if (
+                isActiveBlock(tetrisData[i][j]) &&
+                isInvalidBlock(tetrisData[i] && tetrisData[i][j + index])
+            ) {
+                isMovable = false;
+            }
+        }
+    }
+
+    return isMovable;
+};
+
+const attributeTransfer = (attr, whichRow, whichCol, whichDirection) => {
+    if (tetrisData[whichRow][whichCol + whichDirection] === 0 && attr < 10) {
+        tetrisData[whichRow][whichCol + whichDirection] = attr;
+        tetrisData[whichRow][whichCol] = 0;
+    }
+};
+
+const handleLeft = () => {
+    tetrisData.forEach((row, i) => {
+        for (let j = 0; j < row.length; j++) {
+            const attr = row[j];
+            attributeTransfer(attr, i, j, -1);
+        }
+    });
+};
+
+const handleRight = () => {
+    tetrisData.forEach((row, i) => {
+        for (let j = row.length - 1; j >= 0; j--) {
+            const attr = row[j];
+            attributeTransfer(attr, i, j, 1);
+        }
+    });
+};
+
+const handleHorizontal = (index) => {
+    const blockNextPos = [blockCurrentPos[0], blockCurrentPos[1] + index];
+
+    let isMovable = movableCheck(index);
+
+    if (isMovable) {
+        blockCurrentPos = blockNextPos;
+
+        if (index > 0) {
+            handleRight();
+        } else {
+            handleLeft();
+        }
+        dataToScreen();
+    }
+};
+
+const transformBlock = () => {
+    let currentBlockShape = currentBlock.shape[currentBlock.currentShapeIndex];
+    let isChangable = true;
+
+    const nextShapeIndex = (currentBlock.currentShapeIndex + 1) % 4;
+    const nextBlockShape = currentBlock.shape[nextShapeIndex];
+
+    for (
+        let i = blockCurrentPos[0];
+        i < blockCurrentPos[0] + currentBlockShape.length;
+        i++
+    ) {
+        if (!isChangable) {
+            break;
+        }
+
+        for (
+            let j = blockCurrentPos[1];
+            j < blockCurrentPos[1] + currentBlockShape.length;
+            j++
+        ) {
+            if (tetrisData[i]) {
+                continue;
+            }
+
+            if (
+                nextBlockShape[i - blockCurrentPos[0]][j - blockCurrentPos[1]] >
+                    0 &&
+                isInvalidBlock(tetrisBlock[i][j])
+            ) {
+                isChangable = false;
+            }
+        }
+    }
+
+    if (isChangable) {
+        while (blockCurrentPos[0] < 0) {
+            tickFunction();
+        }
+
+        for (
+            let i = blockCurrentPos[0];
+            i < blockCurrentPos[0] + currentBlockShape.length;
+            i++
+        ) {
+            for (
+                let j = blockCurrentPos[1];
+                j < blockCurrentPos[1] + currentBlockShape.length;
+                j++
+            ) {
+                if (!tetrisData[i]) {
+                    continue;
+                }
+
+                let nextBlockShapeCell =
+                    nextBlockShape[i - blockCurrentPos[0]][
+                        j - blockCurrentPos[1]
+                    ];
+
+                if (nextBlockShapeCell > 0 && tetrisData[i][j] === 0) {
+                    tetrisData[i][j] = currentBlock.numCode;
+                } else if (
+                    nextBlockShapeCell === 0 &&
+                    tetrisData[i][j] &&
+                    tetrisData[i][j] < 10
+                ) {
+                    tetrisData[i][j] = 0;
+                }
+            }
+        }
+
+        currentBlock.currentShapeIndex = nextShapeIndex;
+    }
+
+    dataToScreen();
+};
+
 const keyUpEvent = (event) => {
     if (isStart) {
         switch (event.code) {
             case 'ArrowUp':
+                transformBlock();
                 break;
             case 'Space':
                 while (tickFunction()) {}
@@ -482,10 +645,13 @@ const keyDownEvent = (event) => {
     if (isStart) {
         switch (event.code) {
             case 'ArrowLeft':
+                handleHorizontal(-1);
                 break;
             case 'ArrowRight':
+                handleHorizontal(1);
                 break;
             case 'ArrowDown':
+                tickFunction();
                 break;
             default:
                 break;
