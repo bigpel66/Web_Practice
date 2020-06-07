@@ -577,7 +577,7 @@ const transformBlock = () => {
             if (
                 nextBlockShape[i - blockCurrentPos[0]][j - blockCurrentPos[1]] >
                     0 &&
-                isInvalidBlock(tetrisBlock[i][j])
+                isInvalidBlock(tetrisData[i][j])
             ) {
                 isChangable = false;
             }
